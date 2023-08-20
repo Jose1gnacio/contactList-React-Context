@@ -1,45 +1,72 @@
 const getState = ({ getStore, getActions, setStore }) => {
-	return {
-		store: {
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
-		},
-		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
-			},
-			loadSomeData: () => {
-				/**
-					fetch().then().then(data => setStore({ "foo": data.bar }))
-				*/
-			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
+  return {
+    store: {
+      contactList: [],
+    },
+    actions: {
+      getContactList: () => {
+        var requestOptions = {
+          method: "GET",
+          redirect: "follow",
+        };
+        fetch(
+          "https://playground.4geeks.com/apis/fake/contact/agenda/jose",
+          requestOptions
+        )
+          .then((response) => response.json())
+          .then((result) => setStore({ contactList: result }))
+          .catch((error) => console.log("error", error));
+      },
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
+      postContact: (newContact) => {
+        console.log(newContact)
+        const actions = getActions();
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
 
-				//reset the global store
-				setStore({ demo: demo });
-			}
-		}
-	};
+        var raw = JSON.stringify(newContact);
+
+        var requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          body: raw,
+          redirect: 'follow'
+        };
+
+        fetch("https://playground.4geeks.com/apis/fake/contact/", requestOptions)
+          .then((response) => response.json())
+          .then((result) => {
+            actions.getContactList();
+            console.log(result);
+          })
+          .catch((error) => console.log('error', error));
+      },
+
+      deleteContact: (index) => {
+        const actions = getActions();
+        const currentContactList = getStore().contactList;
+        const selectedContact = currentContactList[index];
+
+        const requestOptions = {
+          method: "DELETE",
+          redirect: "follow",
+        };
+
+        fetch(
+          `https://playground.4geeks.com/apis/fake/contact/${selectedContact.id}`,
+          requestOptions
+        )
+          .then((response) => response.json())
+          .then((result) => {
+            console.log("Contact deleted from API:", result);
+            actions.getContactList();
+          })
+          .catch((error) => console.log("Error deleting contact:", error));
+      },
+
+
+    },
+  };
 };
 
 export default getState;
